@@ -5,12 +5,16 @@
 
 SECONDS=0 # builtin bash timer
 
-ZIPNAME="vbantom-$(date '+%Y%m%d-%H%M').zip"
+ZIPNAME="perf-$(date '+%Y%m%d-%H%M').zip"
+
+if [ ! -d "toolchain" ]; then
+    git clone --depth=1 https://gitlab.com/PixelOS-Devices/playgroundtc -b 17 toolchain
+fi
 
 export ARCH=arm64
-export KBUILD_BUILD_USER=vbajs
-export KBUILD_BUILD_HOST=lhohq
-export PATH="/home/vbajs/toolchains/playground/bin/:$PATH"
+export KBUILD_BUILD_USER=Builder
+export KBUILD_BUILD_HOST=DenomSly
+export PATH="$(pwd)/toolchain/bin/:$PATH"
 
 if [[ $1 = "-c" || $1 = "--clean" ]]; then
 	rm -rf out
@@ -25,7 +29,7 @@ make -j$(nproc) \
     LLVM=1 \
     LLVM_IAS=1 \
     CROSS_COMPILE=aarch64-linux-gnu- \
-    CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+    CROSS_COMPILE_ARM32=arm-linux-gnueabi- 2>&1 | tee log-compiler.txt
 
 kernel="out/arch/arm64/boot/Image.gz"
 dtbo="out/arch/arm64/boot/dtbo.img"
@@ -41,7 +45,7 @@ echo -e "\nKernel compiled successfully! Zipping up...\n"
 if [ -d "$AK3_DIR" ]; then
 	cp -r $AK3_DIR AnyKernel3
 else
-	if ! git clone -q --depth=1 https://github.com/vbajs/AnyKernel3 -b aryan AnyKernel3; then
+	if ! git clone -q --depth=1 https://github.com/Gros77/AnyKernel3 -b master; then
 		echo -e "\nAnyKernel3 repo not found locally and couldn't clone from GitHub! Aborting..."
 		exit 1
 	fi
